@@ -8,15 +8,12 @@ export async function sendMessageToGemini(message: string) {
     throw new Error("Gemini API key missing");
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateText?key=${API_KEY}`;
 
   const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: message }]
-      }
-    ]
+    prompt: {
+      text: message
+    }
   };
 
   const response = await fetch(url, {
@@ -32,10 +29,5 @@ export async function sendMessageToGemini(message: string) {
     throw new Error("Gemini API 요청 실패: " + data.error.message);
   }
 
-  try {
-    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "응답 없음";
-  } catch (e) {
-    console.error("응답 파싱 오류:", e);
-    throw new Error("Gemini 응답 파싱 실패");
-  }
+  return data.candidates?.[0]?.outputText ?? "응답 없음";
 }
