@@ -1,3 +1,4 @@
+// services/geminiService.ts
 export async function sendMessageToGemini(message: string) {
   const response = await fetch('/api/chat', {
     method: 'POST',
@@ -6,5 +7,5 @@ export async function sendMessageToGemini(message: string) {
   });
 
   const data = await response.json();
-  return data.text || "응답 없음";
+  return data.text;
 }
