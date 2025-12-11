@@ -15,9 +15,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     contents: [
       {
         role: "user",
-        parts: [{ text: message }]
-      }
-    ]
+        parts: [{ text: message }],
+      },
+    ],
   };
 
   try {
@@ -30,10 +30,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const data = await response.json();
 
     return res.status(200).json({
-      text: data.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
+      text: data.candidates?.[0]?.content?.parts?.[0]?.text ?? "",
     });
   } catch (err) {
     return res.status(500).json({ error: "Gemini 서버 호출 실패", detail: err });
   }
 }
-
