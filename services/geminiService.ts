@@ -1,5 +1,3 @@
-// geminiService.ts
-
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export async function sendMessageToGemini(message: string) {
