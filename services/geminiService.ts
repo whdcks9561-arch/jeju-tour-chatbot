@@ -1,4 +1,5 @@
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+console.log("API KEY:", API_KEY); // 디버깅 로그
 
 export async function sendMessageToGemini(message: string) {
   if (!API_KEY) {
