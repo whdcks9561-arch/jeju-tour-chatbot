@@ -1,66 +1,31 @@
-import { GoogleGenAI, Content } from "@google/genai";
-import { SYSTEM_INSTRUCTION } from "../constants";
-import { ChatMessage } from "../types";
+// geminiService.ts
 
-let client: GoogleGenAI | null = null;
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-const getClient = () => {
-  if (!client) {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      throw new Error("API Key not found in process.env.API_KEY");
-    }
-    client = new GoogleGenAI({ apiKey });
+export async function sendMessageToGemini(message: string, history: any[]) {
+  if (!API_KEY) {
+    console.error("Gemini API 키가 없습니다. Vercel 환경변수를 확인하세요.");
+    throw new Error("Gemini API key missing");
   }
-  return client;
-};
 
-export const sendMessageToGemini = async (
-  currentMessage: string,
-  history: ChatMessage[]
-): Promise<string> => {
-  try {
-    const ai = getClient();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
-    // Convert app history to Gemini Content format
-    const formattedHistory: Content[] = history.map((msg) => ({
-      role: msg.role === 'model' ? 'model' : 'user',
-      parts: [{ text: msg.text }],
-    }));
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        { role: "user", parts: [{ text: message }] }
+      ]
+    }),
+  });
 
-    const model = 'gemini-2.5-flash';
-    
-    // We are using a stateless approach for simplicity here, sending history manually.
-    // However, ai.chats.create keeps state. Let's use ai.models.generateContent 
-    // for a pure request/response pattern including history + system instruction context.
-    
-    // Construct the full conversation context
-    // System instruction is passed via config
-    const contents: Content[] = [
-      ...formattedHistory,
-      {
-        role: 'user',
-        parts: [{ text: currentMessage }],
-      },
-    ];
+  const data = await response.json();
 
-    const response = await ai.models.generateContent({
-      model,
-      contents,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.4, // Increased to allow general knowledge flexibility
-      },
-    });
-
-    if (response.text) {
-      return response.text;
-    }
-    
-    return "죄송합니다. 답변을 생성하는데 문제가 발생했습니다.";
-
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return "오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+  if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    return data.candidates[0].content.parts[0].text;
+  } else {
+    console.error("Gemini API 오류:", data);
+    throw new Error("Gemini API 요청 실패");
   }
-};
+}
