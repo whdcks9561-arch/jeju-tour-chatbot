@@ -52,7 +52,7 @@ const App: React.FC = () => {
 
     try {
       // Call API
-      const responseText = await sendMessageToGemini(text, chatState.messages);
+      const responseText = await sendMessageToGemini(text);
 
       const botMsg: ChatMessage = {
         id: generateId(),
