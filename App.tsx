@@ -1,3 +1,7 @@
+console.log("ENV TEST:", import.meta.env);
+console.log("API KEY:", import.meta.env.VITE_GEMINI_API_KEY);
+
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, ChatState } from './types';
 import { sendMessageToGemini } from './services/geminiService';
