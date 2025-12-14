@@ -1,40 +1,49 @@
 // api/chat.ts
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const API_KEY = process.env.VITE_GEMINI_API_KEY;
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
+  const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) {
-    return res.status(500).json({ error: "Missing API key" });
+    return res.status(500).json({ error: "Missing GEMINI_API_KEY" });
   }
 
   const { message } = req.body;
-
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-
-  const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: message }]
-      }
-    ]
-  };
+  if (!message) {
+    return res.status(400).json({ error: "No message provided" });
+  }
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: message }],
+            },
+          ],
+        }),
+      }
+    );
 
     const data = await response.json();
 
-    return res.status(200).json({
-      text: data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
-    });
+    const reply =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ??
+      "죄송해요, 답변을 생성하지 못했어요.";
 
-  } catch (err) {
-    return res.status(500).json({ error: "Gemini 서버 호출 실패", detail: err });
+    return res.status(200).json({ text: reply });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Gemini API 호출 실패",
+      detail: String(error),
+    });
   }
 }
