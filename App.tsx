@@ -13,12 +13,12 @@ export default function App() {
   const send = async (text: string) => {
     if (!text.trim()) return;
 
-    const nextMessages = [...messages, { role: "user", text }];
-    setMessages(nextMessages);
+    const next = [...messages, { role: "user", text }];
+    setMessages(next);
     setInput("");
 
-    const reply = await sendMessageToGemini(nextMessages);
-    setMessages([...nextMessages, { role: "bot", text: reply }]);
+    const reply = await sendMessageToGemini(next);
+    setMessages([...next, { role: "bot", text: reply }]);
   };
 
   return (
@@ -46,9 +46,7 @@ export default function App() {
       <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
         <button onClick={() => send("안녕")}>안녕</button>
         <button onClick={() => send("제주 관광지 리스트")}>리스트</button>
-        <button onClick={() => send("2박 3일 일정 추천해줘")}>
-          일정 추천
-        </button>
+        <button onClick={() => send("2박 3일 일정 추천")}>일정</button>
       </div>
 
       <div style={{ display: "flex", gap: 6 }}>
