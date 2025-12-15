@@ -1,5 +1,5 @@
 export async function sendMessageToGemini(
-  messages: { role: string; text: string }[]
+  messages: { role: "user" | "bot"; text: string }[]
 ) {
   const res = await fetch("/api/chat", {
     method: "POST",
