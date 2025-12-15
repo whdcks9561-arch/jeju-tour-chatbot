@@ -14,19 +14,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const contents = [
     {
-      role: "user",
+      role: "system",
       parts: [
         {
-          text: `
-너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
-한국어로 자연스럽고 질문 의도에 맞게 답변한다.
-같은 문장을 반복하지 않는다.
-          `.trim(),
+          text: "너는 제주 관광 전문 AI 챗봇 '차니 봇'이다. 질문 의도에 맞게 매번 다르게 답변한다.",
         },
       ],
     },
     ...messages.map((m: any) => ({
-      role: m.role === "user" ? "user" : "model",
+      role: m.role,
       parts: [{ text: m.text }],
     })),
   ];
@@ -45,7 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const reply =
     data?.candidates?.[0]?.content?.parts
       ?.map((p: any) => p.text)
-      .join("") || "";
+      .join("") ||
+    "제주 여행에 대해 어떤 걸 알고 싶으신가요?";
 
-  return res.status(200).json({ text: reply });
+  res.status(200).json({ text: reply });
 }
