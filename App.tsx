@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { sendMessageToGemini } from "./services/geminiService";
 
-export default function App() {
-  const [messages, setMessages] = useState<{ role: string; text: string }[]>([]);
-  const [input, setInput] = useState("");
-  const [error, setError] = useState("");
+type Message = {
+  role: "user" | "bot";
+  text: string;
+};
 
+export default function App() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -15,124 +18,68 @@ export default function App() {
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const userText = input;
+    const newMessages: Message[] = [
+      ...messages,
+      { role: "user", text: input },
+    ];
+
+    setMessages(newMessages);
     setInput("");
-    setError("");
 
-    setMessages((prev) => [...prev, { role: "user", text: userText }]);
+    const reply = await sendMessageToGemini(newMessages);
 
-    try {
-      const reply = await sendMessageToGemini(userText);
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "bot",
-          text:
-            reply ||
-            "안녕하세요! 😊 제주 여행에 대해 무엇이든 물어보세요.",
-        },
-      ]);
-    } catch (e) {
-      console.error(e);
-      setError("메시지를 처리하는 중 오류가 발생했습니다.");
-    }
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "bot",
+        text:
+          reply ||
+          "제주 여행에 대해 더 구체적으로 말씀해 주세요 😊",
+      },
+    ]);
   };
 
   return (
-    <div style={styles.container}>
+    <div style={{ maxWidth: 480, margin: "0 auto", padding: 20 }}>
       <h2>차니 봇</h2>
 
-      <div style={styles.chatBox}>
-        {messages.map((msg, idx) => (
+      <div style={{ height: "60vh", overflowY: "auto", background: "#f5f5f5", padding: 10 }}>
+        {messages.map((m, i) => (
           <div
-            key={idx}
+            key={i}
             style={{
-              ...styles.message,
-              background: msg.role === "user" ? "#1E6BFF" : "#EEE",
-              color: msg.role === "user" ? "#fff" : "#000",
-              alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+              textAlign: m.role === "user" ? "right" : "left",
+              marginBottom: 10,
             }}
           >
-            {msg.text}
+            <span
+              style={{
+                display: "inline-block",
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: m.role === "user" ? "#1e6bff" : "#e5e5e5",
+                color: m.role === "user" ? "#fff" : "#000",
+              }}
+            >
+              {m.text}
+            </span>
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      {error && <div style={styles.error}>{error}</div>}
-
-      <div style={styles.inputRow}>
+      <div style={{ display: "flex", marginTop: 10 }}>
         <input
-          style={styles.input}
-          placeholder="메시지를 입력하세요"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          placeholder="메시지를 입력하세요"
+          style={{ flex: 1, padding: 8 }}
         />
-        <button
-          type="button"
-          style={styles.button}
-          onClick={handleSend}
-        >
+        <button type="button" onClick={handleSend}>
           보내기
         </button>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    width: "100%",
-    maxWidth: 480,
-    margin: "0 auto",
-    padding: 20,
-    fontFamily: "sans-serif",
-  },
-  chatBox: {
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: 10,
-    background: "#F5F5F5",
-    padding: 20,
-    height: "60vh",
-    overflowY: "auto" as const,
-    borderRadiusadius: 10,
-    marginBottom: 20,
-  },
-  message: {
-    padding: "10px 14px",
-    borderRadius: 8,
-    maxWidth: "80%",
-    fontSize: 15,
-  },
-  inputRow: {
-    display: "flex",
-    gap: 10,
-  },
-  input: {
-    flex: 1,
-    padding: 10,
-    fontSize: 16,
-    borderRadius: 6,
-    border: "1px solid #CCC",
-  },
-  button: {
-    padding: "10px 18px",
-    background: "#007BFF",
-    color: "#fff",
-    borderRadius: 6,
-    border: "none",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-    marginBottom: 10,
-  },
-};
