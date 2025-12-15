@@ -1,4 +1,4 @@
-export async function sendMessageToGemini(message: string) {
+export async function sendMessageToGemini(message: string): Promise<string> {
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -11,13 +11,8 @@ export async function sendMessageToGemini(message: string) {
 
   const data = await response.json();
 
-  console.log("📦 API raw response:", data);
+  console.log("📦 API response:", data);
 
-  // ✅ 어떤 구조든 문자열 하나로 귀결
-  return (
-    data.text ??
-    data.reply ??
-    data.candidates?.[0]?.content?.parts?.[0]?.text ??
-    "⚠️ 응답이 없습니다."
-  );
+  // ✅ 이제 이것만 보면 됨
+  return data.text ?? "⚠️ 응답이 없습니다.";
 }
