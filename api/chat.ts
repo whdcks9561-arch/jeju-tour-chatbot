@@ -17,25 +17,26 @@ export default async function handler(
   const { messages } = req.body;
 
   if (!Array.isArray(messages)) {
-    return res.status(400).json({ error: "messages must be an array" });
+    return res.status(400).json({ error: "messages must be array" });
   }
 
-  const contents = messages.map((m: any) => ({
-    role: m.role === "user" ? "user" : "model",
-    parts: [{ text: m.text }],
-  }));
-
-  const systemPrompt = {
-    role: "user",
-    parts: [
-      {
-        text: `너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
-반드시 한국어로 답변하고,
+  const contents = [
+    {
+      role: "user",
+      parts: [
+        {
+          text: `너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
+한국어로만 답변하고,
 이전 대화 맥락을 기억해서 이어서 답변한다.
-인사는 한 번만 하고, 같은 말을 반복하지 않는다.`,
-      },
-    ],
-  };
+같은 인사나 같은 문장을 반복하지 않는다.`,
+        },
+      ],
+    },
+    ...messages.map((m: any) => ({
+      role: m.role === "user" ? "user" : "model",
+      parts: [{ text: m.text }],
+    })),
+  ];
 
   try {
     const response = await fetch(
@@ -44,7 +45,7 @@ export default async function handler(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [systemPrompt, ...contents],
+          contents,
           generationConfig: {
             temperature: 0.8,
             maxOutputTokens: 512,
@@ -59,10 +60,10 @@ export default async function handler(
       data?.candidates?.[0]?.content?.parts
         ?.map((p: any) => p.text)
         .join("") ||
-      "죄송해요, 다시 한 번 말씀해 주세요 🙂";
+      "음… 다시 한 번 말씀해 주세요 🙂";
 
     res.status(200).json({ text: reply });
-  } catch (err) {
-    res.status(500).json({ error: "Gemini API error", detail: String(err) });
+  } catch (e) {
+    res.status(500).json({ error: "Gemini error", detail: String(e) });
   }
 }
