@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { sendMessageToGemini } from "./services/geminiService";
 
 type Message = {
@@ -9,52 +9,84 @@ type Message = {
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const send = async (text: string) => {
-    if (!text.trim()) return;
+  const handleSend = async () => {
+    if (!input.trim() || loading) return;
 
-    // 1️⃣ 사용자 메시지 추가
-    const nextMessages = [...messages, { role: "user", text }];
-    setMessages(nextMessages);
+    const userMessage = input;
     setInput("");
+    setLoading(true);
+
+    // 1️⃣ 사용자 메시지 먼저 추가
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: userMessage },
+    ]);
 
     try {
-      // 2️⃣ 전체 대화 전달
-      const reply = await sendMessageToGemini(nextMessages);
+      // 2️⃣ Gemini 호출
+      const reply = await sendMessageToGemini(userMessage);
 
-      // 3️⃣ 봇 응답 추가
-      setMessages([...nextMessages, { role: "bot", text: reply }]);
-    } catch (e) {
-      setMessages([
-        ...nextMessages,
-        { role: "bot", text: "⚠️ 응답을 가져오지 못했어요." },
+      console.log("📩 Gemini reply:", reply);
+
+      // 3️⃣ 봇 메시지 추가 (🔥 핵심)
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", text: reply || "⚠️ 응답이 비어있습니다." },
       ]);
+    } catch (e) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", text: "❌ 오류가 발생했습니다." },
+      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: "0 auto", padding: 20 }}>
-      <h2>차니 봇</h2>
+    <div className="h-screen flex justify-center items-center bg-slate-50">
+      <div className="w-[400px] h-[600px] bg-white rounded-xl shadow flex flex-col">
+        <div className="p-4 font-bold border-b">차니 봇</div>
 
-      <div style={{ minHeight: 300 }}>
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            style={{
-              margin: "6px 0",
-              padding: "10px",
-              borderRadius: 8,
-              background: m.role === "user" ? "#1E6BFF" : "#EEE",
-              color: m.role === "user" ? "#FFF" : "#000",
-              maxWidth: "80%",
-            }}
+        <div className="flex-1 p-4 overflow-y-auto space-y-2">
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
+                m.role === "user"
+                  ? "ml-auto bg-blue-500 text-white"
+                  : "mr-auto bg-gray-200"
+              }`}
+            >
+              {m.text}
+            </div>
+          ))}
+
+          {loading && (
+            <div className="mr-auto bg-gray-200 px-3 py-2 rounded-lg text-sm">
+              ...
+            </div>
+          )}
+        </div>
+
+        <div className="p-3 border-t flex gap-2">
+          <input
+            className="flex-1 border rounded px-2"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="메시지를 입력하세요"
+          />
+          <button
+            className="bg-blue-500 text-white px-3 rounded"
+            onClick={handleSend}
           >
-            {m.text}
-          </div>
-        ))}
+            보내기
+          </button>
+        </div>
       </div>
-
-      <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-        <button onClick={() => send("안녕")}>안녕</button>
-        <button onClick={() => send("제주 관광지 리스트")}>리스트</button>
-        <button onClick={() => send("2박 3일 일정 추천")}>
+    </div>
+  );
+}
