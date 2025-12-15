@@ -12,35 +12,35 @@ export default async function handler(
   }
 
   try {
-    const { messages } = req.body;
+    const { message } = req.body;
 
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: "messages missing" });
+    if (!message) {
+      return res.status(400).json({ error: "message missing" });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-pro",
+    });
 
-    // 🔹 대화 → 하나의 프롬프트로 합침
-    const prompt = messages
-      .map((m: any) =>
-        m.role === "user" ? `사용자: ${m.text}` : `봇: ${m.text}`
-      )
-      .join("\n");
+    const result = await model.generateContent(message);
 
-    const result = await model.generateContent(prompt);
-
-    // ✅ 여기 핵심
+    // ✅ Gemini 응답 파싱 (이게 핵심)
     const reply =
-      result.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+      result.response.candidates?.[0]?.content?.parts?.[0]?.text;
 
+    // 🔴 여기서 reply 없으면 무조건 로그
     if (!reply) {
-      console.error("Gemini empty response", result.response);
-      return res.status(200).json({ text: "" });
+      console.error("❌ Gemini returned empty:", result.response);
+      return res.status(200).json({
+        text: "⚠️ 답변을 생성하지 못했습니다. 다시 질문해주세요.",
+      });
     }
 
     return res.status(200).json({ text: reply });
   } catch (error) {
-    console.error("Gemini API error:", error);
-    return res.status(500).json({ error: "Gemini failed" });
+    console.error("🔥 Gemini API error:", error);
+    return res.status(500).json({
+      text: "서버 오류가 발생했습니다.",
+    });
   }
 }
