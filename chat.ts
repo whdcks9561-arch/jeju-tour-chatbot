@@ -18,12 +18,14 @@ export default async function handler(
     }
 
     // 🔑 API KEY
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({
-        text: "❌ GEMINI_API_KEY가 서버에 설정되지 않았습니다.",
-      });
-    }
+const apiKey = process.env.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+  return res.status(500).json({
+    text: "❌ API KEY를 찾을 수 없습니다.",
+  });
+}
+
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
@@ -50,3 +52,4 @@ export default async function handler(
     });
   }
 }
+
