@@ -1,15 +1,15 @@
 type Message = {
-  role: "user" | "bot";
+  role: "user" | "model";
   text: string;
 };
 
 export async function sendMessageToGemini(messages: Message[]) {
-  const response = await fetch("/api/chat", {
+  const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),
   });
 
-  const data = await response.json();
+  const data = await res.json();
   return data.text;
 }
