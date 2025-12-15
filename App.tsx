@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { sendMessageToGemini } from "./services/geminiService";
 
 export default function App() {
@@ -6,24 +6,36 @@ export default function App() {
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
 
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { role: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
+    const userText = input;
     setInput("");
     setError("");
 
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: userText },
+    ]);
+
     try {
-      const reply = await sendMessageToGemini(input);
+      const reply = await sendMessageToGemini(userText);
 
-   const botMessage = {
-  role: "bot",
-  text: reply || "안녕하세요! 😊 제주 여행에 대해 무엇이든 물어보세요.",
-};
-
-
-      setMessages((prev) => [...prev, botMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          text:
+            reply ||
+            "안녕하세요! 😊 제주 여행에 대해 무엇이든 물어보세요.",
+        },
+      ]);
     } catch (e) {
       console.error("메시지 처리 중 오류:", e);
       setError("메시지를 처리하는 중 오류가 발생했습니다.");
@@ -48,6 +60,7 @@ export default function App() {
             {msg.text}
           </div>
         ))}
+        <div ref={bottomRef} />
       </div>
 
       {error && <div style={styles.error}>{error}</div>}
@@ -58,15 +71,20 @@ export default function App() {
           placeholder="메시지를 입력하세요"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
         />
-       <button
-  type="button"
-  style={styles.button}
-  onClickClick={handleSend}
->
-  보내기
-</button>
-
+        <button
+          type="button"
+          style={styles.button}
+          onClick={handleSend}
+        >
+          보내기
+        </button>
       </div>
     </div>
   );
