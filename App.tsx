@@ -19,10 +19,7 @@ export default function App() {
     setInput("");
     setError("");
 
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: userText },
-    ]);
+    setMessages((prev) => [...prev, { role: "user", text: userText }]);
 
     try {
       const reply = await sendMessageToGemini(userText);
@@ -37,7 +34,7 @@ export default function App() {
         },
       ]);
     } catch (e) {
-      console.error("메시지 처리 중 오류:", e);
+      console.error(e);
       setError("메시지를 처리하는 중 오류가 발생했습니다.");
     }
   };
@@ -106,7 +103,7 @@ const styles = {
     padding: 20,
     height: "60vh",
     overflowY: "auto" as const,
-    borderRadius: 10,
+    borderRadiusadius: 10,
     marginBottom: 20,
   },
   message: {
