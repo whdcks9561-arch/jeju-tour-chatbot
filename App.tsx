@@ -18,24 +18,16 @@ export default function App() {
     setInput("");
     setLoading(true);
 
-    // 1️⃣ 사용자 메시지 먼저 추가
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: userMessage },
-    ]);
+    setMessages((prev) => [...prev, { role: "user", text: userMessage }]);
 
     try {
-      // 2️⃣ Gemini 호출
       const reply = await sendMessageToGemini(userMessage);
 
-      console.log("📩 Gemini reply:", reply);
-
-      // 3️⃣ 봇 메시지 추가 (🔥 핵심)
       setMessages((prev) => [
         ...prev,
-        { role: "bot", text: reply || "⚠️ 응답이 비어있습니다." },
+        { role: "bot", text: reply },
       ]);
-    } catch (e) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { role: "bot", text: "❌ 오류가 발생했습니다." },
