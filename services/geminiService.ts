@@ -1,10 +1,29 @@
-export async function sendMessageToGemini(message: string) {
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
-  });
+// services/geminiService.ts
 
-  const data = await response.json();
-  return data.text;
+export async function sendMessageToGemini(message: string) {
+  const text = message.toLowerCase();
+
+  // 아주 단순한 룰 기반 응답
+  if (text.includes("제주") && text.includes("맛집")) {
+    return `
+제주 맛집 추천해드릴게요 😊
+
+🍜 고기국수: 자매국수
+🐖 흑돼지: 돈사돈
+🐟 해산물: 해녀의집
+☕ 카페: 봄날카페
+
+원하시면
+- 지역별
+- 혼밥
+- 가족여행
+으로도 추천해드릴게요!
+`;
+  }
+
+  if (text.includes("안녕")) {
+    return "안녕하세요 👋 제주 여행 도우미 차니 봇입니다!";
+  }
+
+  return "궁금한 걸 조금 더 자세히 말해줄래요? 🙂";
 }
