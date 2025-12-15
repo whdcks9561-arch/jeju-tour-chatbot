@@ -13,35 +13,37 @@ export default function App() {
   const send = async (text: string) => {
     if (!text.trim()) return;
 
-    const next = [...messages, { role: "user", text }];
-    setMessages(next);
+    const nextMessages = [...messages, { role: "user", text }];
+    setMessages(nextMessages);
     setInput("");
 
-    const reply = await sendMessageToGemini(next);
-    setMessages([...next, { role: "bot", text: reply }]);
+    const reply = await sendMessageToGemini(nextMessages);
+    setMessages([...nextMessages, { role: "bot", text: reply }]);
   };
 
   return (
     <div style={{ maxWidth: 420, margin: "0 auto", padding: 20 }}>
       <h2>차니 봇</h2>
 
-      {messages.map((m, i) => (
-        <div
-          key={i}
-          style={{
-            margin: "6px 0",
-            padding: "10px",
-            borderRadius: 8,
-            background: m.role === "user" ? "#1E6BFF" : "#EEE",
-            color: m.role === "user" ? "#FFF" : "#000",
-            maxWidth: "80%",
-          }}
-        >
-          {m.text}
-        </div>
-      ))}
+      <div style={{ minHeight: 300 }}>
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            style={{
+              margin: "6px 0",
+              padding: "10px",
+              borderRadius: 8,
+              background: m.role === "user" ? "#1E6BFF" : "#EEE",
+              color: m.role === "user" ? "#FFF" : "#000",
+              maxWidth: "80%",
+            }}
+          >
+            {m.text}
+          </div>
+        ))}
+      </div>
 
-      <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
         <button onClick={() => send("안녕")}>안녕</button>
         <button onClick={() => send("제주 관광지 리스트")}>리스트</button>
         <button onClick={() => send("2박 3일 일정 추천해줘")}>
@@ -49,7 +51,7 @@ export default function App() {
         </button>
       </div>
 
-      <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+      <div style={{ display: "flex", gap: 6 }}>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
