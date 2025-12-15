@@ -1,39 +1,23 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+export default async function handler(req, res) {
+  const { message } = req.body;
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method Not Allowed" });
+  const geminiRes = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: message }] }],
+      }),
     }
+  );
 
-    const { message } = req.body;
+  const data = await geminiRes.json();
 
-    if (!message) {
-      return res.status(400).json({ error: "message is required" });
-    }
+  // ⭐⭐⭐ 핵심: text만 뽑아서 내려준다
+  const text =
+    data?.candidates?.[0]?.content?.parts?.[0]?.text ??
+    "⚠️ 응답이 없습니다.";
 
-    const apiKey = process.env.VITE_GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({ error: "API KEY NOT FOUND" });
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const result = await model.generateContent(message);
-    const text = result.response.text();
-
-    // ⭐️ 프론트에서 쓰기 쉽게 text 로 내려준다
-    return res.status(200).json({ text });
-  } catch (error: any) {
-    console.error("Gemini Error:", error);
-    return res.status(500).json({
-      text: "⚠️ Gemini 응답 중 오류가 발생했습니다.",
-    });
-  }
+  return res.status(200).json({ text });
 }
