@@ -1,70 +1,62 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { sendMessageToGemini } from "./services/geminiService";
 
-type Message = {
-  role: "user" | "model";
-  text: string;
-};
-
 export default function App() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<
+    { role: "user" | "bot"; text: string }[]
+  >([]);
   const [input, setInput] = useState("");
-  const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const handleSend = async (text?: string) => {
+    const content = text ?? input;
+    if (!content.trim()) return;
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const newMessages = [...messages, { role: "user", text: input }];
-    setMessages(newMessages);
+    const nextMessages = [...messages, { role: "user", text: content }];
+    setMessages(nextMessages);
     setInput("");
 
-    const reply = await sendMessageToGemini(newMessages);
+    const reply = await sendMessageToGemini(nextMessages);
 
-    setMessages((prev) => [
-      ...prev,
-      { role: "model", text: reply },
+    setMessages([
+      ...nextMessages,
+      { role: "bot", text: reply },
     ]);
   };
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", padding: 20 }}>
+    <div style={{ maxWidth: 420, margin: "0 auto", padding: 20 }}>
       <h2>차니 봇</h2>
 
-      <div style={{ height: "60vh", overflowY: "auto", background: "#f5f5f5", padding: 10 }}>
+      <div style={{ minHeight: 400 }}>
         {messages.map((m, i) => (
-          <div key={i} style={{ textAlign: m.role === "user" ? "right" : "left" }}>
-            <span
-              style={{
-                display: "inline-block",
-                padding: "8px 12px",
-                borderRadius: 8,
-                background: m.role === "user" ? "#1e6bff" : "#e5e5e5",
-                color: m.role === "user" ? "#fff" : "#000",
-                marginBottom: 8,
-              }}
-            >
-              {m.text}
-            </span>
+          <div
+            key={i}
+            style={{
+              margin: "8px 0",
+              padding: "8px 12px",
+              borderRadius: 8,
+              background: m.role === "user" ? "#1E6BFF" : "#EEE",
+              color: m.role === "user" ? "#FFF" : "#000",
+              alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+            }}
+          >
+            {m.text}
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
+
+      {/* 빠른 버튼 테스트 */}
+      <button onClick={() => handleSend("리스트")}>리스트</button>
+      <button onClick={() => handleSend("관광지 추천")}>관광지</button>
 
       <div style={{ display: "flex", marginTop: 10 }}>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
           placeholder="메시지를 입력하세요"
-          style={{ flex: 1, padding: 8 }}
+          style={{ flex: 1 }}
         />
-        <button type="button" onClick={handleSend}>
-          보내기
-        </button>
+        <button onClick={() => handleSend()}>보내기</button>
       </div>
     </div>
   );
