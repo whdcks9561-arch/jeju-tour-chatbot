@@ -1,23 +1,25 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
   if (req.method !== "POST") {
-    return res.status(405).json({ text: "Method Not Allowed" });
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   const { message } = req.body;
 
   if (!message) {
-    return res.status(400).json({ text: "메시지가 없습니다." });
+    return res.status(400).json({ error: "message is required" });
   }
 
   try {
     const apiKey = process.env.VITE_GEMINI_API_KEY;
 
     if (!apiKey) {
-      // ✅ 환경변수 없을 때도 동작하게 (요청하신 조건)
-      return res.status(200).json({
-        text: "⚠️ 현재 AI 연결이 꺼져 있습니다. (API KEY 없음)",
+      return res.status(500).json({
+        text: "❌ 서버에 API KEY가 없습니다.",
       });
     }
 
@@ -39,14 +41,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const data = await response.json();
 
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ??
-      "⚠️ AI 응답이 비어 있습니다.";
+    console.log("🤖 Gemini RAW:", JSON.stringify(data));
 
-    // ⭐⭐⭐ 핵심: 무조건 text 하나만 내려줌
+    const text =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ??
+      "⚠️ Gemini 응답 없음";
+
+    // ✅ 프론트에서 바로 쓰기 쉬운 구조
     return res.status(200).json({ text });
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return res.status(500).json({ text: "서버 오류 발생" });
+    console.error(error);
+    return res.status(500).json({
+      text: "❌ Gemini 호출 중 오류 발생",
+    });
   }
 }
