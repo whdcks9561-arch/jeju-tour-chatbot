@@ -19,26 +19,32 @@ export default async function handler(
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro",
+      model: "gemini-1.5-flash",
     });
 
-    const result = await model.generateContent(message);
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: message }],
+        },
+      ],
+    });
 
-    // ✅ Gemini 응답 파싱 (이게 핵심)
-    const reply =
-      result.response.candidates?.[0]?.content?.parts?.[0]?.text;
+    // ✅ 가장 안전한 텍스트 추출
+    const reply = result.response.text();
 
-    // 🔴 여기서 reply 없으면 무조건 로그
+    console.log("✅ Gemini reply:", reply);
+
     if (!reply) {
-      console.error("❌ Gemini returned empty:", result.response);
       return res.status(200).json({
-        text: "⚠️ 답변을 생성하지 못했습니다. 다시 질문해주세요.",
+        text: "⚠️ 답변을 생성하지 못했습니다. 다시 시도해주세요.",
       });
     }
 
     return res.status(200).json({ text: reply });
   } catch (error) {
-    console.error("🔥 Gemini API error:", error);
+    console.error("🔥 Gemini error:", error);
     return res.status(500).json({
       text: "서버 오류가 발생했습니다.",
     });
