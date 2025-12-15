@@ -1,56 +1,56 @@
-// /api/chat.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
   if (req.method !== "POST") {
-    return res.status(405).json({ text: "Method Not Allowed" });
+    return res.status(405).json({ text: "Method not allowed" });
+  }
+
+  const API_KEY = process.env.VITE_GEMINI_API_KEY;
+
+  if (!API_KEY) {
+    return res.status(500).json({
+      text: "❌ Gemini API KEY가 서버에 없습니다.",
+    });
+  }
+
+  const { message } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ text: "메시지가 없습니다." });
   }
 
   try {
-    const { message } = req.body;
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: message }],
+            },
+          ],
+        }),
+      }
+    );
 
-    if (!message) {
-      return res.status(400).json({ text: "❌ message가 없습니다." });
-    }
+    const data = await response.json();
 
-    // 🔑 API KEY
-const apiKey = process.env.VITE_GEMINI_API_KEY;
-
-if (!apiKey) {
-  return res.status(500).json({
-    text: "❌ API KEY를 찾을 수 없습니다.",
-  });
-}
-
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    });
-
-    const result = await model.generateContent(message);
-
-    // ✅ 가장 중요한 부분
+    // ✅ 핵심: Gemini 응답 안전 파싱
     const reply =
-      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ??
+      "안녕하세요 😊 제주 여행에 대해 도와드릴게요!";
 
-    console.log("📤 Gemini raw result:", JSON.stringify(result, null, 2));
-    console.log("📩 Gemini reply:", reply);
-
-    return res.status(200).json({
-      text: reply || "⚠️ Gemini가 빈 응답을 반환했습니다.",
-    });
-  } catch (error: any) {
-    console.error("❌ Gemini API Error:", error);
-
+    return res.status(200).json({ text: reply });
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({
-      text: "❌ 서버에서 오류가 발생했습니다.",
+      text: "❌ Gemini API 호출 중 오류가 발생했습니다.",
     });
   }
 }
-
-
