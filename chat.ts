@@ -1,69 +1,46 @@
-// api/chat.ts
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
+  req: NextApiRequest,
+  res: NextApiResponse
 ) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) {
-    return res.status(500).json({ error: "Missing GEMINI_API_KEY" });
-  }
-
-  const { messages } = req.body;
-
-  if (!Array.isArray(messages)) {
-    return res.status(400).json({ error: "messages must be array" });
-  }
-
-  const contents = [
-    {
-      role: "user",
-      parts: [
-        {
-          text: `너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
-한국어로만 답변하고,
-이전 대화 맥락을 기억해서 이어서 답변한다.
-같은 인사나 같은 문장을 반복하지 않는다.`,
-        },
-      ],
-    },
-    ...messages.map((m: any) => ({
-      role: m.role === "user" ? "user" : "model",
-      parts: [{ text: m.text }],
-    })),
-  ];
-
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 512,
-          },
-        }),
-      }
-    );
+    const { messages } = req.body;
 
-    const data = await response.json();
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: "messages missing" });
+    }
 
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    // 🔹 대화 → 하나의 프롬프트로 합침
+    const prompt = messages
+      .map((m: any) =>
+        m.role === "user" ? `사용자: ${m.text}` : `봇: ${m.text}`
+      )
+      .join("\n");
+
+    const result = await model.generateContent(prompt);
+
+    // ✅ 여기 핵심
     const reply =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((p: any) => p.text)
-        .join("") ||
-      "음… 다시 한 번 말씀해 주세요 🙂";
+      result.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    res.status(200).json({ text: reply });
-  } catch (e) {
-    res.status(500).json({ error: "Gemini error", detail: String(e) });
+    if (!reply) {
+      console.error("Gemini empty response", result.response);
+      return res.status(200).json({ text: "" });
+    }
+
+    return res.status(200).json({ text: reply });
+  } catch (error) {
+    console.error("Gemini API error:", error);
+    return res.status(500).json({ error: "Gemini failed" });
   }
 }
