@@ -59,9 +59,14 @@ export default function App() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
-        <button style={styles.button} onClick={handleSend}>
-          보내기
-        </button>
+       <button
+  type="button"
+  style={styles.button}
+  onClickClick={handleSend}
+>
+  보내기
+</button>
+
       </div>
     </div>
   );
