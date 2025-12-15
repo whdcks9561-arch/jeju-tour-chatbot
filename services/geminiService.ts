@@ -7,10 +7,7 @@ export async function sendMessageToGemini(message: string) {
 
   const data = await res.json();
 
-  console.log("🧪 RAW Gemini response:", data);
+  console.log("📩 Server response:", data);
 
-  return (
-    data?.candidates?.[0]?.content?.parts?.[0]?.text ??
-    ""
-  );
+  return data.text ?? "";
 }
