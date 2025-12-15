@@ -1,15 +1,17 @@
-// src/services/geminiService.ts
-export async function sendMessageToGemini(message: string): Promise<string> {
-  const res = await fetch("/api/chat", {
+export async function sendMessageToGemini(message: string) {
+  const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
   });
 
-  const data = await res.json();
+  if (!response.ok) {
+    throw new Error("API 요청 실패");
+  }
 
-  // ✅ 항상 문자열 보장
-  return typeof data.reply === "string"
-    ? data.reply
-    : "⚠️ 응답 형식 오류";
+  const data = await response.json();
+
+  console.log("📦 API raw response:", data);
+
+  return data.text;
 }
