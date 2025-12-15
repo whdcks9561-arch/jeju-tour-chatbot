@@ -20,44 +20,45 @@ export default async function handler(
     return res.status(400).json({ error: "messages must be an array" });
   }
 
-  // ✅ React messages → Gemini contents 변환
   const contents = messages.map((m: any) => ({
     role: m.role === "user" ? "user" : "model",
     parts: [{ text: m.text }],
   }));
 
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+  const systemPrompt = {
+    role: "user",
+    parts: [
+      {
+        text: `너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
+반드시 한국어로 답변하고,
+이전 대화 맥락을 기억해서 이어서 답변한다.
+인사는 한 번만 하고, 같은 말을 반복하지 않는다.`,
+      },
+    ],
+  };
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
-반드시 한국어로, 친절하고 구체적으로 답변한다.`,
-              },
-            ],
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [systemPrompt, ...contents],
+          generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 512,
           },
-          ...contents,
-        ],
-        generationConfig: {
-          temperature: 0.8,
-          maxOutputTokens: 512,
-        },
-      }),
-    });
+        }),
+      }
+    );
 
     const data = await response.json();
 
     const reply =
       data?.candidates?.[0]?.content?.parts
         ?.map((p: any) => p.text)
-        .join("") ??
+        .join("") ||
       "죄송해요, 다시 한 번 말씀해 주세요 🙂";
 
     res.status(200).json({ text: reply });
