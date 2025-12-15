@@ -23,24 +23,24 @@ export default async function handler(
     API_KEY;
 
   const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `
-너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
-반드시 한국어로 친절하고 구체적으로 답변해라.
-짧은 인사에도 환영 멘트를 포함해라.
+  contents: [
+    {
+      role: "user",
+      parts: [
+        {
+          text: `
+당신은 제주 여행을 도와주는 친절한 AI 챗봇입니다.
+한국어로 자연스럽게 대화하듯 답변해주세요.
 
 사용자 질문:
 ${message}
-            `.trim(),
-          },
-        ],
-      },
-    ],
-  };
+          `.trim(),
+        },
+      ],
+    },
+  ],
+};
+
 
   try {
     const response = await fetch(url, {
@@ -66,3 +66,4 @@ ${message}
     });
   }
 }
+
