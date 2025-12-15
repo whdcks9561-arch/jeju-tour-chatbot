@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sendMessageToGemini } from "./sendMessageToGemini";
+import { sendMessageToGemini } from "./services/sendMessageToGemini";
 
 type Message = {
   role: "user" | "bot";
@@ -18,30 +18,16 @@ export default function App() {
     setInput("");
     setLoading(true);
 
-    // ✅ 사용자 메시지 즉시 추가
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: userMessage },
-    ]);
+    setMessages((prev) => [...prev, { role: "user", text: userMessage }]);
 
     try {
       const reply = await sendMessageToGemini(userMessage);
 
-      console.log("🔥 FINAL REPLY:", reply);
-
-      // ✅ 무조건 문자열로 변환해서 화면에 추가
+      setMessages((prev) => [...prev, { role: "bot", text: reply }]);
+    } catch {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "bot",
-          text: String(reply || "⚠️ 응답이 비어있습니다."),
-        },
-      ]);
-    } catch (e) {
-      console.error(e);
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "❌ 서버 오류가 발생했습니다." },
+        { role: "bot", text: "❌ 오류가 발생했습니다." },
       ]);
     } finally {
       setLoading(false);
