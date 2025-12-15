@@ -1,69 +1,56 @@
+// /api/chat.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ text: "Method Not Allowed" });
   }
-
-  const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) {
-    return res.status(500).json({ error: "Missing GEMINI_API_KEY" });
-  }
-
-  const { message } = req.body;
-  if (!message) {
-    return res.status(400).json({ error: "No message provided" });
-  }
-
-  const url =
-    "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" +
-    API_KEY;
-
-  const body = {
-  contents: [
-    {
-      role: "user",
-      parts: [
-        {
-          text: `
-당신은 제주 여행을 도와주는 친절한 AI 챗봇입니다.
-한국어로 자연스럽게 대화하듯 답변해주세요.
-
-사용자 질문:
-${message}
-          `.trim(),
-        },
-      ],
-    },
-  ],
-};
-
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ text: "❌ message가 없습니다." });
+    }
+
+    // 🔑 API KEY
+const apiKey = process.env.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+  return res.status(500).json({
+    text: "❌ API KEY를 찾을 수 없습니다.",
+  });
+}
+
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
     });
 
-    const data = await response.json();
+    const result = await model.generateContent(message);
 
-    console.log("🧪 RAW Gemini response:", JSON.stringify(data, null, 2));
+    // ✅ 가장 중요한 부분
+    const reply =
+      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    const text =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((p: any) => p.text)
-        .join("") ?? "";
+    console.log("📤 Gemini raw result:", JSON.stringify(result, null, 2));
+    console.log("📩 Gemini reply:", reply);
 
-    return res.status(200).json({ text });
-  } catch (error) {
+    return res.status(200).json({
+      text: reply || "⚠️ Gemini가 빈 응답을 반환했습니다.",
+    });
+  } catch (error: any) {
+    console.error("❌ Gemini API Error:", error);
+
     return res.status(500).json({
-      error: "Gemini API 호출 실패",
-      detail: String(error),
+      text: "❌ 서버에서 오류가 발생했습니다.",
     });
   }
 }
+
 
