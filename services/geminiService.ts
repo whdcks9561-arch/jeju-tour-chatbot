@@ -6,5 +6,11 @@ export async function sendMessageToGemini(message: string) {
   });
 
   const data = await res.json();
-  return data.text;
+
+  console.log("🧪 RAW Gemini response:", data);
+
+  return (
+    data?.candidates?.[0]?.content?.parts?.[0]?.text ??
+    ""
+  );
 }
