@@ -13,5 +13,8 @@ export async function sendMessageToGemini(message: string) {
 
   console.log("📦 API raw response:", data);
 
-  return data.text;
-}
+  return (
+  data.text ??
+  data.candidates?.[0]?.content?.parts?.[0]?.text ??
+  "⚠️ 응답이 없습니다."
+);
