@@ -17,10 +17,11 @@ export default function App() {
     try {
       const reply = await sendMessageToGemini(input);
 
-      const botMessage = {
-        role: "bot",
-        text: reply ?? "응답 없음",
-      };
+   const botMessage = {
+  role: "bot",
+  text: reply || "안녕하세요! 😊 제주 여행에 대해 무엇이든 물어보세요.",
+};
+
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (e) {
