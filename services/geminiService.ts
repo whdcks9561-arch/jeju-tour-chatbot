@@ -13,6 +13,11 @@ export async function sendMessageToGemini(message: string) {
 
   console.log("📦 API raw response:", data);
 
-  // ✅ 핵심: 서버에서 내려주는 reply를 그대로 사용
-  return data.reply || "⚠️ 응답이 없습니다.";
+  // ✅ 어떤 구조든 문자열 하나로 귀결
+  return (
+    data.text ??
+    data.reply ??
+    data.candidates?.[0]?.content?.parts?.[0]?.text ??
+    "⚠️ 응답이 없습니다."
+  );
 }
