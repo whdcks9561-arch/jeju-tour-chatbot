@@ -13,12 +13,23 @@ export default function App() {
   const send = async (text: string) => {
     if (!text.trim()) return;
 
-    const next = [...messages, { role: "user", text }];
-    setMessages(next);
+    // 1️⃣ 사용자 메시지 추가
+    const nextMessages = [...messages, { role: "user", text }];
+    setMessages(nextMessages);
     setInput("");
 
-    const reply = await sendMessageToGemini(next);
-    setMessages([...next, { role: "bot", text: reply }]);
+    try {
+      // 2️⃣ 전체 대화 전달
+      const reply = await sendMessageToGemini(nextMessages);
+
+      // 3️⃣ 봇 응답 추가
+      setMessages([...nextMessages, { role: "bot", text: reply }]);
+    } catch (e) {
+      setMessages([
+        ...nextMessages,
+        { role: "bot", text: "⚠️ 응답을 가져오지 못했어요." },
+      ]);
+    }
   };
 
   return (
@@ -46,19 +57,4 @@ export default function App() {
       <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
         <button onClick={() => send("안녕")}>안녕</button>
         <button onClick={() => send("제주 관광지 리스트")}>리스트</button>
-        <button onClick={() => send("2박 3일 일정 추천")}>일정</button>
-      </div>
-
-      <div style={{ display: "flex", gap: 6 }}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send(input)}
-          placeholder="메시지를 입력하세요"
-          style={{ flex: 1 }}
-        />
-        <button onClick={() => send(input)}>보내기</button>
-      </div>
-    </div>
-  );
-}
+        <button onClick={() => send("2박 3일 일정 추천")}>
