@@ -1,3 +1,4 @@
+// api/chat.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(
@@ -16,49 +17,51 @@ export default async function handler(
   const { messages } = req.body;
 
   if (!Array.isArray(messages)) {
-    return res.status(400).json({ error: "Invalid messages" });
+    return res.status(400).json({ error: "messages must be an array" });
   }
 
-  const contents = [
-    {
-      role: "user",
-      parts: [
-        {
-          text: `
-너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
-항상 한국어로 답변한다.
-같은 문장을 반복하지 않는다.
-사용자 질문 의도에 맞게 구체적으로 안내한다.
-          `.trim(),
-        },
-      ],
-    },
-    ...messages.map((m: any) => ({
-      role: m.role === "user" ? "user" : "model",
-      parts: [{ text: m.text }],
-    })),
-  ];
+  // ✅ React messages → Gemini contents 변환
+  const contents = messages.map((m: any) => ({
+    role: m.role === "user" ? "user" : "model",
+    parts: [{ text: m.text }],
+  }));
+
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents }),
-      }
-    );
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `너는 제주 관광 전문 AI 챗봇 "차니 봇"이다.
+반드시 한국어로, 친절하고 구체적으로 답변한다.`,
+              },
+            ],
+          },
+          ...contents,
+        ],
+        generationConfig: {
+          temperature: 0.8,
+          maxOutputTokens: 512,
+        },
+      }),
+    });
 
     const data = await response.json();
 
     const reply =
       data?.candidates?.[0]?.content?.parts
         ?.map((p: any) => p.text)
-        .join("") ||
-      "제주 여행에 대해 무엇을 도와드릴까요? 😊";
+        .join("") ??
+      "죄송해요, 다시 한 번 말씀해 주세요 🙂";
 
-    return res.status(200).json({ text: reply });
-  } catch (e) {
-    return res.status(500).json({ error: "Gemini API error" });
+    res.status(200).json({ text: reply });
+  } catch (err) {
+    res.status(500).json({ error: "Gemini API error", detail: String(err) });
   }
 }
