@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { sendMessageToGemini } from "./services/geminiService";
 
 type Message = {
-  role: "user" | "bot";
+  role: "user" | "model";
   text: string;
 };
 
@@ -18,11 +18,7 @@ export default function App() {
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const newMessages: Message[] = [
-      ...messages,
-      { role: "user", text: input },
-    ];
-
+    const newMessages = [...messages, { role: "user", text: input }];
     setMessages(newMessages);
     setInput("");
 
@@ -30,12 +26,7 @@ export default function App() {
 
     setMessages((prev) => [
       ...prev,
-      {
-        role: "bot",
-        text:
-          reply ||
-          "제주 여행에 대해 더 구체적으로 말씀해 주세요 😊",
-      },
+      { role: "model", text: reply },
     ]);
   };
 
@@ -45,13 +36,7 @@ export default function App() {
 
       <div style={{ height: "60vh", overflowY: "auto", background: "#f5f5f5", padding: 10 }}>
         {messages.map((m, i) => (
-          <div
-            key={i}
-            style={{
-              textAlign: m.role === "user" ? "right" : "left",
-              marginBottom: 10,
-            }}
-          >
+          <div key={i} style={{ textAlign: m.role === "user" ? "right" : "left" }}>
             <span
               style={{
                 display: "inline-block",
@@ -59,6 +44,7 @@ export default function App() {
                 borderRadius: 8,
                 background: m.role === "user" ? "#1e6bff" : "#e5e5e5",
                 color: m.role === "user" ? "#fff" : "#000",
+                marginBottom: 8,
               }}
             >
               {m.text}
