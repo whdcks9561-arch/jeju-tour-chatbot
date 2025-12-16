@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sendMessageToGemini } from "./services/sendMessageToGemini";
+import { sendMessageToGemini } from "./services/geminiService";
 
 type Message = {
   role: "user" | "bot";
@@ -14,20 +14,19 @@ export default function App() {
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
-    const userMessage = input;
+    const userText = input;
     setInput("");
     setLoading(true);
 
-    setMessages((prev) => [...prev, { role: "user", text: userMessage }]);
+    setMessages((prev) => [...prev, { role: "user", text: userText }]);
 
     try {
-      const reply = await sendMessageToGemini(userMessage);
-
+      const reply = await sendMessageToGemini(userText);
       setMessages((prev) => [...prev, { role: "bot", text: reply }]);
-    } catch {
+    } catch (e) {
       setMessages((prev) => [
         ...prev,
-        { role: "bot", text: "❌ 오류가 발생했습니다." },
+        { role: "bot", text: "❌ 서버 오류" },
       ]);
     } finally {
       setLoading(false);
@@ -35,46 +34,27 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen flex justify-center items-center bg-slate-50">
-      <div className="w-[400px] h-[600px] bg-white rounded-xl shadow flex flex-col">
-        <div className="p-4 font-bold border-b">차니 봇</div>
+    <div style={{ width: 360, margin: "0 auto", padding: 16 }}>
+      <h3>차니 봇</h3>
 
-        <div className="flex-1 p-4 overflow-y-auto space-y-2">
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
-                m.role === "user"
-                  ? "ml-auto bg-blue-500 text-white"
-                  : "mr-auto bg-gray-200"
-              }`}
-            >
-              {m.text}
-            </div>
-          ))}
+      <div style={{ minHeight: 400 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ marginBottom: 8 }}>
+            <b>{m.role === "user" ? "나" : "봇"}:</b> {m.text}
+          </div>
+        ))}
+      </div>
 
-          {loading && (
-            <div className="mr-auto bg-gray-200 px-3 py-2 rounded-lg text-sm">
-              ...
-            </div>
-          )}
-        </div>
-
-        <div className="p-3 border-t flex gap-2">
-          <input
-            className="flex-1 border rounded px-2"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="메시지를 입력하세요"
-          />
-          <button
-            className="bg-blue-500 text-white px-3 rounded"
-            onClick={handleSend}
-          >
-            보내기
-          </button>
-        </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          style={{ flex: 1 }}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="메시지를 입력하세요"
+        />
+        <button onClick={handleSend} disabled={loading}>
+          보내기
+        </button>
       </div>
     </div>
   );
