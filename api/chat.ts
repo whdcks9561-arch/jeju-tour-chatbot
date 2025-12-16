@@ -1,9 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     return res.status(405).json({ text: "Method Not Allowed" });
   }
@@ -23,23 +18,24 @@ export default async function handler(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-  contents: [
-    {
-      role: "user",
-      parts: [
-        {
-          text: `다음 질문에 한국어로 친절하게 답변해 주세요.\n\n질문: ${message}`,
-        },
-      ],
-    },
-  ],
-}),
-
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `다음 질문에 한국어로 친절하게 답변해 주세요.\n\n질문: ${message}`,
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    );
 
     const data = await response.json();
 
     const text =
-      data.candidates?.[0]?.content?.parts
+      data?.candidates?.[0]?.content?.parts
         ?.map((p: any) => p.text)
         .join("") ?? "⚠️ Gemini 응답이 비어있습니다.";
 
@@ -49,4 +45,3 @@ export default async function handler(
     return res.status(200).json({ text: "❌ 서버 오류" });
   }
 }
-
