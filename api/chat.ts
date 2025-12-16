@@ -40,13 +40,16 @@ export default async function handler(req: Request) {
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
-            { role: "user", parts: [{ text: message }] },
+            {
+              role: "user",
+              parts: [{ text: message }],
+            },
           ],
         }),
       }
@@ -54,8 +57,12 @@ export default async function handler(req: Request) {
 
     const data = await response.json();
 
+    // 🔥 모든 케이스 대응
     const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ??
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p: any) => p.text)
+        ?.join("") ||
+      data?.candidates?.[0]?.output_text ||
       "⚠️ Gemini 응답이 비어있습니다.";
 
     return new Response(
@@ -63,6 +70,7 @@ export default async function handler(req: Request) {
       { status: 200 }
     );
   } catch (e) {
+    console.error(e);
     return new Response(
       JSON.stringify({ text: "❌ 서버 오류" }),
       { status: 200 }
