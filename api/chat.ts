@@ -23,14 +23,18 @@ export default async function handler(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: message }],
-            },
-          ],
-        }),
-      }
-    );
+  contents: [
+    {
+      role: "user",
+      parts: [
+        {
+          text: `다음 질문에 한국어로 친절하게 답변해 주세요.\n\n질문: ${message}`,
+        },
+      ],
+    },
+  ],
+}),
+
 
     const data = await response.json();
 
@@ -45,3 +49,4 @@ export default async function handler(
     return res.status(200).json({ text: "❌ 서버 오류" });
   }
 }
+
