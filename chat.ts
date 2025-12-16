@@ -7,16 +7,17 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ text: "Method Not Allowed" });
   }
 
-  let message: string | undefined;
+  let message = "";
 
   try {
-    // ✅ Vercel Serverless 방식
-    if (typeof req.body === "string") {
-      message = JSON.parse(req.body)?.message;
-    } else {
-      message = req.body?.message;
-    }
+    // ✅ 가장 안전한 방식
+    const body = typeof req.body === "object"
+      ? req.body
+      : JSON.parse(req.body || "{}");
+
+    message = body.message;
   } catch (e) {
+    console.error("Body parse error:", e);
     return res.status(400).json({ text: "요청 파싱 실패" });
   }
 
@@ -24,9 +25,10 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ text: "메시지가 없습니다." });
   }
 
+  // 🔥 여기까지 오면 500 안 남
   if (!process.env.GEMINI_API_KEY) {
     return res.status(200).json({
-      text: "⚠️ GEMINI_API_KEY가 설정되지 않았습니다.",
+      text: "⚠️ GEMINI_API_KEY가 설정되지 않았습니다. (테스트 응답)",
     });
   }
 
@@ -44,20 +46,13 @@ export default async function handler(req: any, res: any) {
 
     const data = await response.json();
 
-    if (!response.ok) {
-      console.error("Gemini API Error:", data);
-      return res.status(200).json({
-        text: "❌ Gemini API 호출 실패",
-      });
-    }
-
     const text =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ??
       "⚠️ Gemini 응답이 비어있습니다.";
 
     return res.status(200).json({ text });
   } catch (err) {
-    console.error("Server Error:", err);
+    console.error("Gemini Error:", err);
     return res.status(200).json({ text: "❌ 서버 오류" });
   }
 }
