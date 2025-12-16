@@ -4,32 +4,30 @@ export const config = {
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
-    res.statusCode = 405;
-    res.end(JSON.stringify({ text: "Method Not Allowed" }));
-    return;
+    return res.status(405).json({ text: "Method Not Allowed" });
   }
 
-  let body = "";
-  for await (const chunk of req) {
-    body += chunk;
-  }
+  let message: string | undefined;
 
-  const { message } = JSON.parse(body || "{}");
+  try {
+    // ✅ Vercel Serverless 방식
+    if (typeof req.body === "string") {
+      message = JSON.parse(req.body)?.message;
+    } else {
+      message = req.body?.message;
+    }
+  } catch (e) {
+    return res.status(400).json({ text: "요청 파싱 실패" });
+  }
 
   if (!message) {
-    res.statusCode = 400;
-    res.end(JSON.stringify({ text: "메시지가 없습니다." }));
-    return;
+    return res.status(400).json({ text: "메시지가 없습니다." });
   }
 
   if (!process.env.GEMINI_API_KEY) {
-    res.statusCode = 200;
-    res.end(
-      JSON.stringify({
-        text: "⚠️ GEMINI_API_KEY가 설정되지 않았습니다.",
-      })
-    );
-    return;
+    return res.status(200).json({
+      text: "⚠️ GEMINI_API_KEY가 설정되지 않았습니다.",
+    });
   }
 
   try {
@@ -45,15 +43,21 @@ export default async function handler(req: any, res: any) {
     );
 
     const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Gemini API Error:", data);
+      return res.status(200).json({
+        text: "❌ Gemini API 호출 실패",
+      });
+    }
+
     const text =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ??
       "⚠️ Gemini 응답이 비어있습니다.";
 
-    res.statusCode = 200;
-    res.end(JSON.stringify({ text }));
+    return res.status(200).json({ text });
   } catch (err) {
-    console.error(err);
-    res.statusCode = 200;
-    res.end(JSON.stringify({ text: "❌ 서버 오류" }));
+    console.error("Server Error:", err);
+    return res.status(200).json({ text: "❌ 서버 오류" });
   }
 }
