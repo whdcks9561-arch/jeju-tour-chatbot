@@ -31,6 +31,7 @@ export default function App() {
       });
 
       const data = await res.json();
+      console.log("🔥 API raw response:", data);
 
       // 🔥 핵심: data.text 사용
       setMessages((prev) => [
