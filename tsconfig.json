@@ -7,8 +7,17 @@
     "jsx": "react-jsx",
     "strict": false,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": []
   },
-  "include": ["index.tsx", "App.tsx", "components/**/*"],
-  "exclude": ["api"]
+  "include": [
+    "index.tsx",
+    "App.tsx",
+    "components/**/*.tsx",
+    "components/**/*.ts"
+  ],
+  "exclude": [
+    "api",
+    "node_modules"
+  ]
 }
