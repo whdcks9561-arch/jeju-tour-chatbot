@@ -12,7 +12,6 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // ✅ response는 여기서 최초 선언
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
@@ -40,8 +39,16 @@ export default async function handler(req: any, res: any) {
       }
     );
 
+    // ✅ 1️⃣ Gemini 응답 JSON 파싱
     const data = await response.json();
 
+    // ✅ 2️⃣ 🔥 여기! 이 줄이 로그 위치
+    console.log(
+      "🔥 Gemini FULL RESPONSE:",
+      JSON.stringify(data, null, 2)
+    );
+
+    // ✅ 3️⃣ 기존 응답 파싱 로직
     const text =
       data?.candidates?.[0]?.content?.parts
         ?.map((p: any) => p.text)
