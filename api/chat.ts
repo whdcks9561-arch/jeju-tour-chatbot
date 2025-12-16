@@ -47,28 +47,36 @@ export default async function handler(req: Request) {
         body: JSON.stringify({
           contents: [
             {
+              role: "system",
+              parts: [
+                {
+                  text: "너는 제주 관광 전문 챗봇이다. 항상 한국어로 친절하고 명확하게 답변한다.",
+                },
+              ],
+            },
+            {
               role: "user",
               parts: [{ text: message }],
             },
           ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 512,
+          },
         }),
       }
     );
 
     const data = await response.json();
 
-    // 🔥 모든 케이스 대응
+    // 🔥 여기서 이제 반드시 candidates가 생성됨
     const text =
       data?.candidates?.[0]?.content?.parts
         ?.map((p: any) => p.text)
         ?.join("") ||
-      data?.candidates?.[0]?.output_text ||
-      "⚠️ Gemini 응답이 비어있습니다.";
+      `❌ Gemini 응답 없음 (raw: ${JSON.stringify(data)})`;
 
-    return new Response(
-      JSON.stringify({ text }),
-      { status: 200 }
-    );
+    return new Response(JSON.stringify({ text }), { status: 200 });
   } catch (e) {
     console.error(e);
     return new Response(
