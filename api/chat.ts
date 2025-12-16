@@ -18,19 +18,25 @@ export default async function handler(req: any, res: any) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: `다음 질문에 한국어로 친절하게 답변해 주세요.\n\n질문: ${message}`,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
+  contents: [
+    {
+      role: "user",
+      parts: [
+        {
+          text: `너는 한국 여행을 도와주는 친절한 AI 챗봇이다.
+아래 질문에 반드시 한국어로 자연스럽게 한 문장 이상 답변해라.
+
+질문: ${message}`,
+        },
+      ],
+    },
+  ],
+  generationConfig: {
+    temperature: 0.7,
+    maxOutputTokens: 512,
+  },
+}),
+
 
     const data = await response.json();
 
@@ -45,3 +51,4 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ text: "❌ 서버 오류" });
   }
 }
+
