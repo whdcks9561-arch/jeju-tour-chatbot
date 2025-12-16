@@ -1,4 +1,3 @@
-import "isomorphic-fetch";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(
@@ -34,12 +33,6 @@ export default async function handler(
     );
 
     const data = await response.json();
-
-    if (data.error) {
-      return res.status(200).json({
-        text: `❌ Gemini 오류: ${data.error.message}`,
-      });
-    }
 
     const text =
       data.candidates?.[0]?.content?.parts
