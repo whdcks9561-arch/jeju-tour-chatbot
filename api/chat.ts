@@ -15,7 +15,7 @@ export default async function handler(req: Request) {
   try {
     const body = await req.json();
     message = body.message;
-  } catch (e) {
+  } catch {
     return new Response(
       JSON.stringify({ text: "요청 파싱 실패" }),
       { status: 400 }
@@ -45,7 +45,9 @@ export default async function handler(req: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: message }] }],
+          contents: [
+            { role: "user", parts: [{ text: message }] },
+          ],
         }),
       }
     );
@@ -60,7 +62,7 @@ export default async function handler(req: Request) {
       JSON.stringify({ text }),
       { status: 200 }
     );
-  } catch (err) {
+  } catch (e) {
     return new Response(
       JSON.stringify({ text: "❌ 서버 오류" }),
       { status: 200 }
