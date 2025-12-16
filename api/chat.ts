@@ -37,7 +37,12 @@ export default async function handler(
 
     console.log("🔥 Gemini raw response:", JSON.stringify(data));
 
-    // ✅ 절대 안 깨지는 안전 파싱
+    if (data.error) {
+      return res.status(200).json({
+        text: `❌ Gemini 오류: ${data.error.message}`,
+      });
+    }
+
     const text =
       data?.candidates?.[0]?.content?.parts
         ?.map((p: any) => p.text)
@@ -48,7 +53,7 @@ export default async function handler(
   } catch (err) {
     console.error("❌ Gemini Error:", err);
     return res.status(200).json({
-      text: "❌ Gemini 호출 중 오류가 발생했습니다.",
+      text: "❌ Gemini 호출 중 서버 오류",
     });
   }
 }
